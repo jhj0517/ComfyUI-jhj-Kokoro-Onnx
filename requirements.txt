@@ -1,3 +1,8 @@
-#  Update your requirements.
-#  numpy==1.18.1
-
+fugashi
+librosa
+mojimoji
+munch
+phonemizer
+pypdf
+unicodedata2
+unidic-lite
