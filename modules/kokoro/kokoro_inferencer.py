@@ -13,23 +13,31 @@ class KokoroInferencer:
         self.model = None
         self.model_dir = model_dir
         self.available_models = list(self.get_models().keys()) + list(KOKORO_MODELS_REPO_ID_MAP.keys())
+        self.available_voices = None
         os.makedirs(self.model_dir, exist_ok=True)
 
     def load_model(self,
                    model_name: str,
                    device: str):
+        """
+        Load models.
+        Following the structure of https://huggingface.co/hexgrad/Kokoro-82M/tree/main/voices,
+        It is assumed that the `voice` subdirectory is there along with it.
+        """
         if model_name not in list(self.get_models().values()):
             download_model_if_no_exists(
                 repo_id=KOKORO_MODELS_REPO_ID_MAP[model_name],
                 download_dir=self.model_dir
             )
 
-        config_path = os.path.join(self.get_models()[model_name], "config.json")
+        model_dir_path = self.get_models()[model_name]
+        config_path = os.path.join(model_dir_path, "config.json")
         if not os.path.exists(config_path):
-            raise ValueError(f"The config file for the model does not exists at \"{config_path}\".")
+            raise ValueError(f"The config file for the model does not exist at \"{config_path}\".")
 
         config = json.load(config_path)
         self.model = build_model(config, device=device)
+        self.available_voices = os.listdir(os.path.join(model_dir_path, "voices"))
 
     def get_models(self) -> Dict:
         """
