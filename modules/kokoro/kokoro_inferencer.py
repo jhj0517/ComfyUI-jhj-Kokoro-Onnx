@@ -3,14 +3,17 @@ import torch
 from typing import (Optional, Union, Dict, List)
 import json
 
-from models import build_model
+from models import (build_model, forward)
 from model_downloader import (download_model_if_no_exists, KOKORO_MODELS_REPO_ID_MAP)
+from ..tokenizer.tokenizer import tokenize
+from ..tokenizer.normalizer import (phonemize, get_vocab)
 
 
 class KokoroInferencer:
     def __init__(self,
                  model_dir: str):
         self.model = None
+        self.voice_pack = None
         self.model_dir = model_dir
         self.available_models = list(self.get_models().keys()) + list(KOKORO_MODELS_REPO_ID_MAP.keys())
         self.available_voices = None
@@ -38,6 +41,22 @@ class KokoroInferencer:
         config = json.load(config_path)
         self.model = build_model(config, device=device)
         self.available_voices = os.listdir(os.path.join(model_dir_path, "voices"))
+
+    def generate(self, text, voicepack, lang='a', speed=1, ps=None):
+        if self.model is None:
+            raise ValueError("Load model first")
+
+        ps = ps or phonemize(text, lang)
+        tokens = tokenize(ps)
+        if not tokens:
+            return None
+        elif len(tokens) > 510:
+            tokens = tokens[:510]
+            print('Truncated to 510 tokens')
+        ref_s = voicepack[len(tokens)]
+        out_audio = forward(self.model, tokens, ref_s, speed)
+        out_ps = ''.join(next(k for k, v in get_vocab().items() if i == v) for i in tokens)
+        return out_audio
 
     def get_models(self) -> Dict:
         """
