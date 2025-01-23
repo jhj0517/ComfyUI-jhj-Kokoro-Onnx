@@ -1,2 +1,3 @@
 onnxruntime-gpu
 kokoro-onnx
+soundfile
