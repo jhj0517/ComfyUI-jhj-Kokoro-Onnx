@@ -73,7 +73,7 @@ class KokoroAudioGenerator:
                 "text": ("STRING", ),
                 "voice": (default_voices, {"default": default_voices[0]}),
                 "lang": (default_langs, {"default": default_langs[0]}),
-                "speed": ("FLOAT", {"default": 1.0}),
+                "speed": ("FLOAT", {"default": 1.0, "step": 0.1}),
             },
             "optional": {
                 "phonemes": ("STRING", {"default": None}),
