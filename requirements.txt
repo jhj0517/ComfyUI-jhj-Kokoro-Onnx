@@ -1,8 +1,2 @@
-fugashi
-librosa
-mojimoji
-munch
-phonemizer
-pypdf
-unicodedata2
-unidic-lite
+onnxruntime-gpu
+kokoro-onnx
