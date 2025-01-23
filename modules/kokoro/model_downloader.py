@@ -6,7 +6,9 @@ import os
 KOKORO_MODELS_URL = {
     "kokoro-v0_19.onnx": {
         "model": "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files/kokoro-v0_19.onnx",
-        "voice": "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files/voices.bin"
+        "voice": "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files/voices.bin",
+        "default_available_voices": ['af', 'af_bella', 'af_nicole', 'af_sarah', 'af_sky', 'am_adam', 'am_michael', 'bf_emma', 'bf_isabella', 'bm_george', 'bm_lewis'],
+        "default_available_langs": ['en-us', 'en-gb', 'fr-fr', 'ja', 'ko', 'cmn']
     }
 }
 
