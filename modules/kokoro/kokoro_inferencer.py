@@ -11,8 +11,9 @@ class KokoroPipeline:
     def __init__(self,
                  model_dir: str):
         self.model: Kokoro = None
+        self.default_model_name = "kokoro-v0_19.onnx"
         self.model_dir: str = model_dir
-        self.available_models: list = self.get_available_models(self.model_dir)
+        self.available_models: list = self.get_available_models()
         self.available_voices: Optional[list] = None
         self.available_langs: Optional[list] = None
         os.makedirs(self.model_dir, exist_ok=True)
@@ -59,32 +60,24 @@ class KokoroPipeline:
         )
         return samples, sample_rate
 
-    @staticmethod
-    def get_available_models(model_dir: str) -> List:
+    def get_available_models(self) -> List:
         """
         Get available models
         """
         allowed_model_extensions = ["onnx"]
-        files = os.listdir(os.path.join(model_dir))
+        files = os.listdir(os.path.join(self.model_dir))
         models = [f for f in files if f.split(".")[-1] in allowed_model_extensions]
-        return models
+        models = set(models) | set(KOKORO_MODELS_URL.keys())
+        return list(models)
 
-    @staticmethod
-    def get_available_voice_packs(model_dir: str) -> List:
+    def get_available_voice_packs(self) -> List:
         """
         Get available voice packs
         """
         allowed_voice_packs_extensions = ["bin"]
-        files = os.listdir(os.path.join(model_dir))
+        files = os.listdir(os.path.join(self.model_dir))
         voice_packs = [f for f in files if f.split(".")[-1] in allowed_voice_packs_extensions]
-        return voice_packs
-
-
-# Example
-# pipeline = KokoroPipeline(model_dir="models")
-# pipeline.load_model(model_name="kokoro-v0_19.onnx", voice_pack="voices.bin")
-# samples, sample_rate = pipeline.predict(text="I love", voice="af", speed=1.0, lang="ko", phonemes=None, trim=True)
-
-
-
+        default_voice_pack_name = KOKORO_MODELS_URL[self.default_model_name]["voice"].split("/")[-1]
+        voice_packs = {default_voice_pack_name, } | set(voice_packs)
+        return list(voice_packs)
 
