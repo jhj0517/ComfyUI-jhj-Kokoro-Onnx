@@ -18,20 +18,24 @@ custom_nodes_script_dir = os.path.dirname(os.path.abspath(__file__))
 custom_nodes_model_dir = os.path.join(folder_paths.models_dir, "kokoro-onnx")
 custom_nodes_output_dir = os.path.join(folder_paths.get_output_directory())
 
+os.makedirs(custom_nodes_model_dir, exist_ok=True)
+
 
 def get_category_name():
     return "ComfyUI jhj Kokoro Onnx"
 
 
 def numpy_to_tensor(audio: np.ndarray) -> Tensor:
-    return torch.from_numpy(audio).unsqueeze(0).unsqueeze(0).float()
+    tensor = torch.from_numpy(audio).unsqueeze(0).unsqueeze(0).float()
+    return tensor
 
 
 class KokoroModelLoader:
     @classmethod
     def INPUT_TYPES(s):
-        kokoro_models = KokoroPipeline.get_available_models(custom_nodes_model_dir)
-        kokoro_voice_packs = KokoroPipeline.get_available_voice_packs(custom_nodes_model_dir)
+        _instance = KokoroPipeline(custom_nodes_model_dir)
+        kokoro_models = _instance.get_available_models()
+        kokoro_voice_packs = _instance.get_available_voice_packs()
 
         return {
             "required": {
@@ -58,26 +62,27 @@ class KokoroModelLoader:
 class KokoroAudioGenerator:
     @classmethod
     def INPUT_TYPES(s):
+        # Hardcode defaults for not knowing how to set them dynamically with change listeners in ComfyUI
         default_model = list(KOKORO_MODELS_URL.keys())[0]
+        default_voices = KOKORO_MODELS_URL[default_model]["default_available_voices"]
+        default_langs = KOKORO_MODELS_URL[default_model]["default_available_langs"]
 
         return {
             "required": {
                 "model": ("KOKORO_ONNX", ),
-                "text": ("STR", ),
-                "voice": (default_model["default_available_voices"], ),
-                "lang": (default_model["default_available_langs"], ),
+                "text": ("STRING", ),
+                "voice": (default_voices, {"default": default_voices[0]}),
+                "lang": (default_langs, {"default": default_langs[0]}),
                 "speed": ("FLOAT", {"default": 1.0}),
-                "phonemes": ("STR", {"default": None}),
-                "trim": ("BOOL", {"default": True}),
             },
             "optional": {
-                "a": ("INT", {"default": 5}),
-                "b": ("INT", {"default": 10}),
+                "phonemes": ("STRING", {"default": None}),
+                "trim": ("BOOLEAN", {"default": True}),
             }
         }
 
-    RETURN_TYPES = ("AUDIO", "INT")
-    RETURN_NAMES = ("audio", "sample_rate")
+    RETURN_TYPES = ("AUDIO",)
+    RETURN_NAMES = ("audio",)
     FUNCTION = "predict"
     CATEGORY = get_category_name()
 
@@ -99,4 +104,4 @@ class KokoroAudioGenerator:
         )
         samples = numpy_to_tensor(samples)
 
-        return (samples, sample_rate)
+        return ({"waveform": samples, "sample_rate": sample_rate},)
