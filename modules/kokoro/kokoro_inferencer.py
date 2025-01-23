@@ -12,7 +12,7 @@ class KokoroPipeline:
                  model_dir: str):
         self.model: Kokoro = None
         self.model_dir: str = model_dir
-        self.available_models: list = self.get_available_models()
+        self.available_models: list = self.get_available_models(self.model_dir)
         self.available_voices: Optional[list] = None
         self.available_langs: Optional[list] = None
         os.makedirs(self.model_dir, exist_ok=True)
@@ -59,21 +59,23 @@ class KokoroPipeline:
         )
         return samples, sample_rate
 
-    def get_available_models(self) -> List:
+    @staticmethod
+    def get_available_models(model_dir: str) -> List:
         """
         Get available models
         """
         allowed_model_extensions = ["onnx"]
-        files = os.listdir(os.path.join(self.model_dir))
+        files = os.listdir(os.path.join(model_dir))
         models = [f for f in files if f.split(".")[-1] in allowed_model_extensions]
         return models
 
-    def get_available_voice_packs(self) -> List:
+    @staticmethod
+    def get_available_voice_packs(model_dir: str) -> List:
         """
         Get available voice packs
         """
         allowed_voice_packs_extensions = ["bin"]
-        files = os.listdir(os.path.join(self.model_dir))
+        files = os.listdir(os.path.join(model_dir))
         voice_packs = [f for f in files if f.split(".")[-1] in allowed_voice_packs_extensions]
         return voice_packs
 
