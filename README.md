@@ -1,4 +1,4 @@
-# ComfyUI jhj Kokoro Onnx Wrapper
+# ComfyUI jhj Kokoro Onnx
 
 This is the [ComfyUI](https://github.com/comfyanonymous/ComfyUI) custom node wrapper for the [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)
 

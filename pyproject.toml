@@ -11,5 +11,5 @@ Repository = "https://github.com/jhj0517/ComfyUI-jhj-Kokoro-Onnx.git"
 
 [tool.comfy]
 PublisherId = "jhj0517"
-DisplayName = "ComfyUI jhj Kokoro Onnx Wrapper"
+DisplayName = "ComfyUI jhj Kokoro Onnx"
 Icon = ""
