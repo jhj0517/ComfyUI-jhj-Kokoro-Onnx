@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 from kokoro_onnx import Kokoro
 
-from model_downloader import (download_model_if_no_exists, KOKORO_MODELS_URL)
+from .model_downloader import (download_model_if_no_exists, KOKORO_MODELS_URL)
 
 
 class KokoroPipeline:
