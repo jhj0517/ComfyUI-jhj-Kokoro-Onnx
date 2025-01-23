@@ -1,82 +1,87 @@
 import os
-import torch
 from typing import (Optional, Union, Dict, List)
-import json
+import numpy as np
+from numpy.typing import NDArray
+from kokoro_onnx import Kokoro
 
-from models import (build_model, forward)
-from model_downloader import (download_model_if_no_exists, KOKORO_MODELS_REPO_ID_MAP)
-from ..tokenizer.tokenizer import tokenize
-from ..tokenizer.normalizer import (phonemize, get_vocab)
+from model_downloader import (download_model_if_no_exists, KOKORO_MODELS_URL)
 
 
-class KokoroInferencer:
+class KokoroPipeline:
     def __init__(self,
                  model_dir: str):
-        self.model = None
-        self.voice_pack = None
-        self.model_dir = model_dir
-        self.available_models = list(self.get_models().keys()) + list(KOKORO_MODELS_REPO_ID_MAP.keys())
-        self.available_voices = None
+        self.model: Kokoro = None
+        self.model_dir: str = model_dir
+        self.available_models: list = self.get_available_models()
+        self.available_voices: Optional[list] = None
+        self.available_langs: Optional[list] = None
         os.makedirs(self.model_dir, exist_ok=True)
 
     def load_model(self,
                    model_name: str,
-                   device: str):
+                   voice_pack: str):
         """
-        Load models.
-        Following the structure of https://huggingface.co/hexgrad/Kokoro-82M/tree/main/voices,
-        It is assumed that the `voice` subdirectory is there along with it.
+        Set model instance
         """
-        if model_name not in list(self.get_models().values()):
+        model_path = os.path.join(self.model_dir, model_name)
+        voice_pack_path = os.path.join(self.model_dir, voice_pack)
+
+        if not os.path.exists(model_path):
+            print(f"Model {model_name} is not detected. Downloading models..")
             download_model_if_no_exists(
-                repo_id=KOKORO_MODELS_REPO_ID_MAP[model_name],
+                model_name=model_name,
                 download_dir=self.model_dir
             )
 
-        model_dir_path = self.get_models()[model_name]
-        config_path = os.path.join(model_dir_path, "config.json")
-        if not os.path.exists(config_path):
-            raise ValueError(f"The config file for the model does not exist at \"{config_path}\".")
+        # Device ( GPU or CPU is automatically set by kokoro-onnx )
+        self.model = Kokoro(model_path, voice_pack_path)
+        self.available_voices = self.model.get_voices()
+        self.available_langs = self.model.get_languages()
 
-        config = json.load(config_path)
-        self.model = build_model(config, device=device)
-        self.available_voices = os.listdir(os.path.join(model_dir_path, "voices"))
-
-    def generate(self, text, voicepack, lang='a', speed=1, ps=None):
+    def predict(self,
+                text: str,
+                voice: str,
+                lang: str = "en-us",
+                speed: float = 1.0,
+                phonemes: Optional[str] = None,
+                trim: bool = True) -> tuple[NDArray[np.float32], int]:
+        """Predict"""
         if self.model is None:
-            raise ValueError("Load model first")
+            raise ValueError("Load model first with `load_model()`")
 
-        ps = ps or phonemize(text, lang)
-        tokens = tokenize(ps)
-        if not tokens:
-            return None
-        elif len(tokens) > 510:
-            tokens = tokens[:510]
-            print('Truncated to 510 tokens')
-        ref_s = voicepack[len(tokens)]
-        out_audio = forward(self.model, tokens, ref_s, speed)
-        out_ps = ''.join(next(k for k, v in get_vocab().items() if i == v) for i in tokens)
-        return out_audio
+        samples, sample_rate = self.model.create(
+            text=text,
+            voice=voice,
+            lang=lang,
+            speed=speed,
+            phonemes=phonemes,
+            trim=trim
+        )
+        return samples, sample_rate
 
-    def get_models(self) -> Dict:
+    def get_available_models(self) -> List:
         """
-        Get model directory dictionary that mapped as {"model_name": "path/to/dir"}.
-        When downloaded from huggingface, the directory name usually has the structure of `model--repo_id--repo_name`,
-        which is confusing. So map the `repo_name` only at the end to display it cleanly in the UI.
+        Get available models
         """
-        model_names = os.listdir(self.model_dir)
-        wrong_dirs = [".locks"]
-        model_names = list(set(model_names) - set(wrong_dirs))
+        allowed_model_extensions = ["onnx"]
+        files = os.listdir(os.path.join(self.model_dir))
+        models = [f for f in files if f.split(".")[-1] in allowed_model_extensions]
+        return models
 
-        model_map = dict()
-        for name in model_names:
-            model_path = os.path.join(self.model_dir, name)
-            if "--" in name:
-                name = name.split("--")[-1]
-            model_map[name] = model_path
-        return model_map
+    def get_available_voice_packs(self) -> List:
+        """
+        Get available voice packs
+        """
+        allowed_voice_packs_extensions = ["bin"]
+        files = os.listdir(os.path.join(self.model_dir))
+        voice_packs = [f for f in files if f.split(".")[-1] in allowed_voice_packs_extensions]
+        return voice_packs
 
 
+# Example
+# pipeline = KokoroPipeline(model_dir="models")
+# pipeline.load_model(model_name="kokoro-v0_19.onnx", voice_pack="voices.bin")
+# samples, sample_rate = pipeline.predict(text="I love", voice="af", speed=1.0, lang="ko", phonemes=None, trim=True)
 
 
 
