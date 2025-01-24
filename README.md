@@ -4,7 +4,7 @@ This is the [ComfyUI](https://github.com/comfyanonymous/ComfyUI) custom node wra
 
 ## Installation
 
-Search "ComfyUI jhj Kokoro Onnx Wrapper" in the Manager.
+Search "ComfyUI jhj Kokoro Onnx" in the Manager.
 
 Or if you want to install manually, follow the steps below:
 1. git clone repository into `ComfyUI\custom_nodes\`
