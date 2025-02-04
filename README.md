@@ -1,6 +1,8 @@
 # ComfyUI jhj Kokoro Onnx
-
 This is the [ComfyUI](https://github.com/comfyanonymous/ComfyUI) custom node wrapper for the [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)
+
+https://github.com/user-attachments/assets/f227159b-86c6-49a7-adba-3823d41974eb
+
 
 ## Installation
 
